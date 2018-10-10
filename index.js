@@ -33,6 +33,10 @@ setTimeout(() => {
             console.log("err");
         }
         if(!adids.includes(adid) && adid) {
+            let links = items[i].querySelectorAll('a');
+            for(let j = 0 ; j < links.length ; j++) {
+                links[j].href = 'https://www.ebay-kleinanzeigen.de/'+links[j].href;
+            }
             msg += items[i].innerHTML;
             console.log('not contained');
             fs.appendFileSync('adids', adid+"\n");
