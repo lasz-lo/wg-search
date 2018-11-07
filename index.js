@@ -25,6 +25,7 @@ setTimeout(() => {
     if(!fs.existsSync('adids')) fs.writeFileSync('adids', "");
     var adids = fs.readFileSync('adids', 'utf8');
     let msg = "";
+    let ads = 0;
     for(let i = 0 ; i < items.length ; i++) {
         let adid;
         try {
@@ -38,18 +39,19 @@ setTimeout(() => {
                 links[j].href = 'https://www.ebay-kleinanzeigen.de/'+links[j].href;
             }
             msg += items[i].innerHTML;
+            ads++;
             console.log('not contained');
             fs.appendFileSync('adids', adid+"\n");
         } else {
             console.log('contained');
         }
     }
-    if(msg) sendMail(msg);
+    if(msg) sendMail(msg, ads);
     fs.unlinkSync('page.temp');
 }, 500);
 
 
-function sendMail(text) {
+function sendMail(text, count) {
     var user = JSON.parse(fs.readFileSync('userauth.json'));
 
     let transporter = nodemailer.createTransport({
@@ -63,7 +65,7 @@ function sendMail(text) {
     let mailOptions = {
         from: '"WG App" <eskalations.stosstrupp@gmail.com>', // sender address
         to: 'eskalations.stosstrupp@gmail.com', // list of receivers
-        subject: 'Angebote', // Subject line
+        subject: `${count} Angebote`, // Subject line
         text: '', // plain text body
         html: text // html body
     };

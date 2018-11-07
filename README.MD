@@ -1,0 +1,1 @@
+This spaghetticode is used to pull offers from ebay-kleinanzeigen.de and send them to me via mail.
