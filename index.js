@@ -3,20 +3,31 @@ const domino = require('domino');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
 
-var options = {
-    host: 'www.ebay-kleinanzeigen.de',
-    port: 443,
-    path: '/s-haus-mieten/26135/c205l3110+haus_mieten.zimmer_d:5,'
-};
+var config = JSON.parse(fs.readFileSync('config.json'));
 
-https.get(options, function (res) {
-    res.setEncoding('utf8');
-    text = res.on('data', function (data) {
-        fs.appendFileSync('page.temp', data);
+
+
+for(let i = 0 ; i < config.paths.length ; i++) {
+    var options = {
+        host: 'www.ebay-kleinanzeigen.de',
+        port: 443,
+        path: config.paths[i]
+    };
+
+    https.get(options, function (res) {
+        res.setEncoding('utf8');
+        text = res.on('data', function (data) {
+            fs.appendFileSync('page.temp', data);
+        });
+    }).on('error', function (e) {
+        console.log("Got error: " + e.message);
     });
-}).on('error', function (e) {
-    console.log("Got error: " + e.message);
-});
+}
+
+
+
+
+
 setTimeout(() => {
     let text = fs.readFileSync('page.temp', 'utf8');
     var window = domino.createWindow(text);
@@ -52,7 +63,7 @@ setTimeout(() => {
 
 
 function sendMail(text, count) {
-    var user = JSON.parse(fs.readFileSync('userauth.json'));
+    var user = JSON.parse(fs.readFileSync('config.json'));
 
     let transporter = nodemailer.createTransport({
         host: 'smtp.gmail.com',
