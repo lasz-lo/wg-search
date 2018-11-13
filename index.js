@@ -5,61 +5,64 @@ const nodemailer = require('nodemailer');
 
 var config = JSON.parse(fs.readFileSync('config.json'));
 
+var options;
 
+fetchPages();
 
-for(let i = 0 ; i < config.paths.length ; i++) {
-    var options = {
-        host: 'www.ebay-kleinanzeigen.de',
-        port: 443,
-        path: config.paths[i]
-    };
+async function fetchPages() {
+    for (let i = 0; i < config.paths.length; i++) {
+        options = {
+            host: 'www.ebay-kleinanzeigen.de',
+            port: 443,
+            path: config.paths[i]
+        };
 
-    https.get(options, function (res) {
-        res.setEncoding('utf8');
-        text = res.on('data', function (data) {
-            fs.appendFileSync('page.temp', data);
+        await https.get(options, function (res) {
+            res.setEncoding('utf8');
+            text = res.on('data', function (data) {
+                fs.appendFileSync('page.temp', data);
+            });
+        }).on('error', function (e) {
+            console.log("Got error: " + e.message);
         });
-    }).on('error', function (e) {
-        console.log("Got error: " + e.message);
-    });
+    }
 }
 
 
 
 
-
-setTimeout(() => {
+function processMessage() {
     let text = fs.readFileSync('page.temp', 'utf8');
     var window = domino.createWindow(text);
     var document = window.document;
     let items = document.getElementsByClassName('ad-list')[0].getElementsByClassName('aditem');
-    if(!fs.existsSync('adids')) fs.writeFileSync('adids', "");
+    if (!fs.existsSync('adids')) fs.writeFileSync('adids', "");
     var adids = fs.readFileSync('adids', 'utf8');
     let msg = "";
     let ads = 0;
-    for(let i = 0 ; i < items.length ; i++) {
+    for (let i = 0; i < items.length; i++) {
         let adid;
         try {
             adid = items[i].attributes["data-adid"].data;
-        } catch(e) {
+        } catch (e) {
             console.log("err");
         }
-        if(!adids.includes(adid) && adid) {
+        if (!adids.includes(adid) && adid) {
             let links = items[i].querySelectorAll('a');
-            for(let j = 0 ; j < links.length ; j++) {
-                links[j].href = 'https://www.ebay-kleinanzeigen.de/'+links[j].href;
+            for (let j = 0; j < links.length; j++) {
+                links[j].href = 'https://www.ebay-kleinanzeigen.de/' + links[j].href;
             }
             msg += items[i].innerHTML;
             ads++;
             console.log('not contained');
-            fs.appendFileSync('adids', adid+"\n");
+            fs.appendFileSync('adids', adid + "\n");
         } else {
             console.log('contained');
         }
     }
-    if(msg) sendMail(msg, ads);
+    if (msg) sendMail(msg, ads);
     fs.unlinkSync('page.temp');
-}, 500);
+}
 
 
 function sendMail(text, count) {
